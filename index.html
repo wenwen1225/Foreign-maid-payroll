@@ -27,11 +27,11 @@ button{min-height:44px}
   header{gap:12px}
   main{padding-top:16px}
 }
-</style></head><body><main>
+#dashboard,#bills{grid-column:1/-1}.totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.totals p{background:#f1f6f4;border-radius:12px;padding:12px;margin:0}.totals strong{display:block;margin-top:8px;font-size:clamp(18px,3vw,28px)}#bills summary{cursor:pointer;color:#176357;font-weight:700;padding:12px 0}#billMonth{grid-column:1/-1;margin:0}#bills li{padding:8px 0}#bills li button{margin-top:6px}@media(max-width:460px){.totals{grid-template-columns:1fr}.totals p{display:flex;align-items:center;justify-content:space-between;gap:8px}.totals strong{margin:0}}</style></head><body><main>
 <header><a href="https://wens-space.vercel.app/">返回 Wen’s Space</a><button id="logout" type="button" hidden>登出</button><h1>薪資與繳費紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a></header>
 <section id="login" hidden><h2>輸入薪資頁密碼</h2><form><label>密碼<input name="password" type="password" autocomplete="current-password" required></label><button>登入</button></form></section><div class="bar" id="filters" hidden><label>年份<select id="year"></select></label><label>月份<select id="month"></select></label></div>
 <p id="status" role="status" aria-live="polite"></p>
-<div id="content" hidden>
+<div id="content" hidden><section id="dashboard"><h2>支出總覽</h2><div class="totals"><p>本月實付<strong id="monthTotal">—</strong></p><p>2026 年累計實付<strong id="yearTotal">—</strong></p><p>待繳帳單<strong id="pendingTotal">—</strong></p></div><p id="breakdown"></p><p id="yearStatus" role="status"></p></section>
 <section><h2>本月紀錄</h2><p id="overview"></p></section>
 <section><h2>薪資</h2><p id="summary"></p><form id="salary">
 <label>表列現金參考<input name="reference" type="number" min="0" step="1"></label>
@@ -44,37 +44,38 @@ button{min-height:44px}
 <label>調整金額<input name="amount" type="number" step="1" required></label>
 <label>備註<input name="note" maxlength="500"></label><button>儲存請假</button>
 <button class="secondary" type="reset">新增一筆</button></form></section>
-<section><h2>繳費與代付</h2><ul id="feeList"></ul><form id="fee">
+<section id="bills"><h2>帳單與代繳</h2><p>收到帳單先記期限，繳完再補實繳日期和金額。</p><details id="billEditor"><summary id="billTitle">新增帳單</summary><form id="fee"><p id="billMonth"></p>
 <input name="id" type="hidden"><label>項目<select name="category"><option>健保費</option><option>就業安定費</option><option>職災保險費</option><option>雇主意外險</option><option>其他代付</option></select></label>
 <label>帳單涵蓋期間<input name="period" maxlength="500"></label>
 <label>繳費期限<input name="due" type="date"></label><label>實際繳費日<input name="paidDate" type="date"></label>
-<label>實付金額<input name="amount" type="number" min="0" step="1"></label><label>備註<input name="note" maxlength="500"></label><button>儲存繳費</button>
-<button class="secondary" type="reset">新增一筆</button></form></section>
+<label>實付金額<input name="amount" type="number" min="0" step="1"></label><label>備註<input name="note" maxlength="500"></label><button>儲存帳單</button>
+<button class="secondary" type="reset">清除表單</button></form></details><h3>待繳及待補資料</h3><ul id="pendingBills"></ul><h3>本月已繳</h3><ul id="paidBills"></ul></section>
 
 </div></main><script>
 const el = id => document.getElementById(id);
 const year = el('year'), month = el('month');
 const salary = el('salary'), leave = el('leave'), fee = el('fee');
 const today = new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit'}).format(new Date());
-for (let y=2026;y<=Math.max(2029,Number(today.slice(0,4))+1);y++) year.add(new Option(y+' 年',y));
-year.value = today.slice(0,4);
+year.add(new Option('2026 年','2026'));
+const records = new Map();
+let billMonth = '';
 const current = () => year.value + '-' + month.value;
 function months(preferred) {
   month.replaceChildren();
   for (let m=year.value==='2026'?6:1;m<=12;m++) month.add(new Option(m+' 月',String(m).padStart(2,'0')));
   if ([...month.options].some(item=>item.value===preferred)) month.value=preferred;
 }
-months(today.slice(5,7));
+months(today.startsWith('2026-') ? today.slice(5,7) : '12');
 const formatted = value => Number(value).toLocaleString('zh-TW')+' 元';
 function fill(form, keys, values) {
   keys.forEach((key,i)=>{form.elements[key].value=values[i] ?? '';});
 }
-function list(id, rows, caption, edit) {
+function list(id, rows, caption, edit, empty='本月無紀錄', label='編輯') {
   el(id).replaceChildren();
-  if (!rows.length) {const item=document.createElement('li');item.textContent='本月無紀錄';el(id).append(item);}
+  if (!rows.length) {const item=document.createElement('li');item.textContent=empty;el(id).append(item);}
   for (const row of rows) {
     const item=document.createElement('li');item.textContent=caption(row);
-    if (edit) {const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent='編輯';button.onclick=()=>edit(row);item.append(button);}
+    if (edit) {const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent=label;button.onclick=()=>edit(row);item.append(button);}
     el(id).append(item);
   }
 }
@@ -89,12 +90,48 @@ function render(result) {
     +'  ｜  調整後參考 '+(reference===''?'待填':formatted(Number(reference)+adjustment));
   list('leaveList',data.leave,r=>[r[1]?r[1]+'（'+r[6]+'）':'日期待補',r[2]&&r[2]+'（'+r[7]+'）',formatted(r[3]),r[4]].filter(Boolean).join(' · '),
     r=>fill(leave,['start','end','amount','note','id'],r.slice(1,6)));
-  list('feeList',data.fees,r=>[r[1],r[2],r[3]&&'期限 '+r[3],r[4]?'實繳 '+r[4]:'繳費日待補',r[5]===''?'金額待補':formatted(r[5]),r[6]].filter(Boolean).join(' · '),
-    r=>fill(fee,['category','period','due','paidDate','amount','note','id'],r.slice(1)));
+  renderTotals();
   el('overview').textContent = '實際付現日 '+(paidDate||'待填')+' ｜ 實付金額 '
     +(amount===''?'待填':formatted(amount))+' ｜ '+(paper==='是'?'已簽收':'未登記簽收')
     +' ｜ 請假 '+data.leave.length+' 筆 ｜ 繳費 '+data.fees.length+' 筆';
   el('sheet').href=result.sheet;el('sheet').hidden=false;el('content').hidden=false;
+}
+function renderTotals() {
+  const all = [...records.values()];
+  const bills = all.flatMap(data=>data.fees);
+  const hasAmount = value => value !== '' && value != null;
+  const paid = row => row[4] && hasAmount(row[5]);
+  const sum = (rows,index) => rows.reduce((total,row)=>total+Number(row[index]),0);
+  const salaryPaid = all.map(data=>data.salary).filter(row=>row[3]?.startsWith('2026-') && hasAmount(row[4]));
+  const yearPaid = bills.filter(row=>paid(row) && row[4].startsWith('2026-'));
+  const monthSalary = sum(salaryPaid.filter(row=>row[3].slice(0,7)===current()),4);
+  const monthBills = yearPaid.filter(row=>row[4].slice(0,7)===current());
+  const monthFees = sum(monthBills,5);
+  const pending = bills.filter(row=>!paid(row)).sort((a,b)=>(a[3]||'9999').localeCompare(b[3]||'9999'));
+  const complete = records.size === month.options.length;
+  el('monthTotal').textContent=complete?formatted(monthSalary+monthFees):'—';
+  el('yearTotal').textContent=complete?formatted(sum(salaryPaid,4)+sum(yearPaid,5)):'—';
+  el('pendingTotal').textContent=complete?pending.length+' 筆':'—';
+  el('breakdown').textContent=complete?'本月薪資 '+formatted(monthSalary)+' ｜ 代繳 '+formatted(monthFees):'';
+  const caption = r => [r[1],r[2],r[3]&&'期限 '+r[3],r[4]&&'實繳 '+r[4],hasAmount(r[5])?'實付 '+formatted(r[5]):'',r[6]].filter(Boolean).join(' · ');
+  const edit = row => {
+    billMonth=row[0];
+    el('billMonth').textContent='帳單歸檔月份 '+billMonth;
+    el('billTitle').textContent='編輯帳單';
+    fill(fee,['category','period','due','paidDate','amount','note','id'],row.slice(1));
+    el('billEditor').open=true;
+    el('billEditor').scrollIntoView({block:'nearest'});
+  };
+  list('pendingBills',pending,caption,edit,complete?'目前沒有待繳帳單':'目前載入的月份沒有待繳帳單','補繳費／編輯');
+  list('paidBills',monthBills,caption,edit);
+}
+async function loadYear() {
+  el('yearStatus').textContent='正在彙整 2026 年各月資料…';
+  const missing=[...month.options].map(option=>'2026-'+option.value).filter(key=>!records.has(key));
+  const results=await Promise.allSettled(missing.map(async key=>[key,await api('loadMonth',{args:[key]})]));
+  for (const result of results) if (result.status==='fulfilled') records.set(...result.value);
+  renderTotals();
+  el('yearStatus').textContent=records.size===month.options.length?'':'部分月份讀取失敗，請切換月份重試。';
 }
 function busy(active) {
   document.querySelectorAll('button,select').forEach(control=>{control.disabled=active;});
@@ -126,7 +163,11 @@ el('logout').onclick=async()=>{
 async function request(action,pending,success,...args) {
   busy(true);el('status').textContent=pending;
   try {
-    render(await api(action,{args}));
+    const result=await api(action,{args});
+    const key=action==='loadMonth'?args[0]:args[1];
+    records.set(key,result);
+    render(records.get(current()) || result);
+    if (records.size < month.options.length) await loadYear();
     el('login').hidden=true;
     el('filters').hidden=el('logout').hidden=false;
     el('status').textContent=success;
@@ -137,10 +178,16 @@ async function request(action,pending,success,...args) {
 }
 function load() {el('content').hidden=true;request('loadMonth','讀取中…','',current());}
 year.onchange=()=>{months(month.value);load();};month.onchange=load;
-for (const form of [leave,fee]) form.onreset=()=>{form.elements.id.value='';};
+leave.onreset=()=>{leave.elements.id.value='';};
+fee.onreset=()=>{
+  fee.elements.id.value='';
+  billMonth='';
+  el('billMonth').textContent='帳單歸檔月份 '+current();
+  el('billTitle').textContent='新增帳單';
+};
 for (const [form,type] of [[salary,'薪資'],[leave,'請假'],[fee,'繳費']]) {
   form.onsubmit=event=>{event.preventDefault();
-    request('saveRecord','儲存中…','已儲存',type,current(),Object.fromEntries(new FormData(form)));
+    request('saveRecord','儲存中…','已儲存',type,form===fee && billMonth ? billMonth : current(),Object.fromEntries(new FormData(form)));
   };
 }
 load();
