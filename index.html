@@ -1,0 +1,120 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
+*{box-sizing:border-box}body{margin:0;background:#f1f6f4;color:#152d29;font:16px system-ui,sans-serif}main{max-width:840px;margin:auto;padding:24px 16px 56px}h1,h2{margin:0 0 12px}h2{font-size:20px}header,.bar,form{display:flex;flex-wrap:wrap;gap:12px;align-items:end}header{align-items:center;justify-content:space-between}.bar{margin:16px 0}section{background:white;border:1px solid #d7e5e0;border-radius:16px;padding:20px;margin:14px 0}label{display:grid;gap:5px;font-size:14px}input,select,button{font:inherit;border:1px solid #91aaa3;border-radius:8px;padding:8px;min-height:42px;max-width:100%}button{background:#176357;color:white;cursor:pointer}button.secondary{color:#176357;background:white}button:disabled{opacity:.5}a{color:#176357}ul{padding-left:20px}li{margin:8px 0}li button{margin-left:8px}p{margin:8px 0 12px}#status{min-height:1.5em}[hidden]{display:none!important}
+</style></head><body><main>
+<header><a href="https://wens-space.vercel.app/">返回 Wen’s Space</a><button id="logout" type="button" hidden>登出</button><h1>薪資與繳費紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a></header>
+<section id="login" hidden><h2>輸入薪資頁密碼</h2><form><label>密碼<input name="password" type="password" autocomplete="current-password" required></label><button>登入</button></form></section><div class="bar" id="filters" hidden><label>年份<select id="year"></select></label><label>月份<select id="month"></select></label></div>
+<p id="status" role="status" aria-live="polite"></p>
+<div id="content" hidden>
+<section><h2>本月紀錄</h2><p id="overview"></p></section>
+<section><h2>薪資</h2><p id="summary"></p><form id="salary">
+<label>表列現金參考<input name="reference" type="number" min="0" step="1"></label>
+<label>實際付現日<input name="paidDate" type="date"></label>
+<label>實付金額<input name="amount" type="number" min="0" step="1"></label>
+<label>已簽收<input name="received" type="checkbox"></label><button>儲存薪資</button></form></section>
+<section><h2>請假紀錄</h2><ul id="leaveList"></ul><form id="leave">
+<input name="id" type="hidden"><label>請假開始<input name="start" type="date"></label>
+<label>請假結束（選填）<input name="end" type="date"></label>
+<label>調整金額<input name="amount" type="number" step="1" required></label>
+<label>備註<input name="note" maxlength="500"></label><button>儲存請假</button>
+<button class="secondary" type="reset">新增一筆</button></form></section>
+<section><h2>繳費與代付</h2><ul id="feeList"></ul><form id="fee">
+<input name="id" type="hidden"><label>項目<select name="category"><option>健保費</option><option>就業安定費</option><option>職災保險費</option><option>雇主意外險</option><option>其他代付</option></select></label>
+<label>帳單涵蓋期間<input name="period" maxlength="500"></label>
+<label>繳費期限<input name="due" type="date"></label><label>實際繳費日<input name="paidDate" type="date"></label>
+<label>實付金額<input name="amount" type="number" min="0" step="1"></label><label>備註<input name="note" maxlength="500"></label><button>儲存繳費</button>
+<button class="secondary" type="reset">新增一筆</button></form></section>
+
+</div></main><script>
+const el = id => document.getElementById(id);
+const year = el('year'), month = el('month');
+const salary = el('salary'), leave = el('leave'), fee = el('fee');
+const today = new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit'}).format(new Date());
+for (let y=2026;y<=Math.max(2029,Number(today.slice(0,4))+1);y++) year.add(new Option(y+' 年',y));
+year.value = today.slice(0,4);
+const current = () => year.value + '-' + month.value;
+function months(preferred) {
+  month.replaceChildren();
+  for (let m=year.value==='2026'?6:1;m<=12;m++) month.add(new Option(m+' 月',String(m).padStart(2,'0')));
+  if ([...month.options].some(item=>item.value===preferred)) month.value=preferred;
+}
+months(today.slice(5,7));
+const formatted = value => Number(value).toLocaleString('zh-TW')+' 元';
+function fill(form, keys, values) {
+  keys.forEach((key,i)=>{form.elements[key].value=values[i] ?? '';});
+}
+function list(id, rows, caption, edit) {
+  el(id).replaceChildren();
+  if (!rows.length) {const item=document.createElement('li');item.textContent='本月無紀錄';el(id).append(item);}
+  for (const row of rows) {
+    const item=document.createElement('li');item.textContent=caption(row);
+    if (edit) {const button=document.createElement('button');button.type='button';button.className='secondary';button.textContent='編輯';button.onclick=()=>edit(row);item.append(button);}
+    el(id).append(item);
+  }
+}
+function render(result) {
+  const data=result;
+  const [,scheduled,reference,paidDate,amount,paper]=data.salary;
+  fill(salary,['reference','paidDate','amount'],[reference,paidDate,amount]);
+  salary.elements.received.checked=paper==='是';
+  leave.reset();fee.reset();
+  const adjustment=data.leave.reduce((sum,row)=>sum+Number(row[3]),0);
+  el('summary').textContent='預定發薪 '+scheduled+'  ｜  請假調整 '+formatted(adjustment)
+    +'  ｜  調整後參考 '+(reference===''?'待填':formatted(Number(reference)+adjustment));
+  list('leaveList',data.leave,r=>[r[1]?r[1]+'（'+r[6]+'）':'日期待補',r[2]&&r[2]+'（'+r[7]+'）',formatted(r[3]),r[4]].filter(Boolean).join(' · '),
+    r=>fill(leave,['start','end','amount','note','id'],r.slice(1,6)));
+  list('feeList',data.fees,r=>[r[1],r[2],r[3]&&'期限 '+r[3],r[4]?'實繳 '+r[4]:'繳費日待補',r[5]===''?'金額待補':formatted(r[5]),r[6]].filter(Boolean).join(' · '),
+    r=>fill(fee,['category','period','due','paidDate','amount','note','id'],r.slice(1)));
+  el('overview').textContent = '實際付現日 '+(paidDate||'待填')+' ｜ 實付金額 '
+    +(amount===''?'待填':formatted(amount))+' ｜ '+(paper==='是'?'已簽收':'未登記簽收')
+    +' ｜ 請假 '+data.leave.length+' 筆 ｜ 繳費 '+data.fees.length+' 筆';
+  el('sheet').href=result.sheet;el('sheet').hidden=false;el('content').hidden=false;
+}
+function busy(active) {
+  document.querySelectorAll('button,select').forEach(control=>{control.disabled=active;});
+}
+async function api(action,payload={}) {
+  const response=await fetch('/api/payroll',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...payload})});
+  const result=await response.json();
+  if (!response.ok) throw Object.assign(new Error(result.error),{status:response.status});
+  return result;
+}
+function showLogin() {
+  for (const id of ['filters','content','logout','sheet']) el(id).hidden=true;
+  el('login').hidden=false;
+}
+el('login').querySelector('form').onsubmit=async event=>{
+  event.preventDefault();
+  const form=event.currentTarget, button=form.querySelector('button');
+  button.disabled=true;
+  try {
+    await api('login',{password:form.elements.password.value});
+    form.reset(); el('login').hidden=true; load();
+  } catch (error) { el('status').textContent=error.message; }
+  finally { button.disabled=false; }
+};
+el('logout').onclick=async()=>{
+  try { await api('logout');showLogin();el('status').textContent='已登出'; }
+  catch (error) { el('status').textContent=error.message; }
+};
+async function request(action,pending,success,...args) {
+  busy(true);el('status').textContent=pending;
+  try {
+    render(await api(action,{args}));
+    el('login').hidden=true;
+    el('filters').hidden=el('logout').hidden=false;
+    el('status').textContent=success;
+  } catch (error) {
+    if (error.status===401) showLogin();
+    el('status').textContent=error.message||'處理失敗，請重試';
+  } finally { busy(false); }
+}
+function load() {el('content').hidden=true;request('loadMonth','讀取中…','',current());}
+year.onchange=()=>{months(month.value);load();};month.onchange=load;
+for (const form of [leave,fee]) form.onreset=()=>{form.elements.id.value='';};
+for (const [form,type] of [[salary,'薪資'],[leave,'請假'],[fee,'繳費']]) {
+  form.onsubmit=event=>{event.preventDefault();
+    request('saveRecord','儲存中…','已儲存',type,current(),Object.fromEntries(new FormData(form)));
+  };
+}
+load();
+</script></body></html>
