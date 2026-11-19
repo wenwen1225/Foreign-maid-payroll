@@ -36,15 +36,25 @@ module.exports = async function handler(req, res) {
   if (!['loadMonth','saveRecord'].includes(body.action) || !Array.isArray(body.args))
     return send(400,{error:'操作錯誤'});
   try {
-    const url = new URL(PAYROLL_API_URL);
+    let url;
+    try {
+      url = new URL(PAYROLL_API_URL.trim());
+    } catch {
+      return send(502,{error:'後端網址格式錯誤，請核對 PAYROLL_API_URL'});
+    }
     if (url.origin !== 'https://script.google.com' || !/^\/macros\/s\/[\w-]+\/exec$/.test(url.pathname))
-      throw new Error('Invalid backend URL');
+      return send(502,{error:'後端網址須使用 Apps Script 部署提供的 /exec 網址'});
     const response = await fetch(url,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({...body,secret:PAYROLL_API_SECRET}),
       signal:AbortSignal.timeout(20000)
     });
-    if (!response.ok) throw new Error('Backend unavailable');
+    if (new URL(response.url).hostname === 'accounts.google.com')
+      return send(502,{error:'後端部署要求登入 Google，請確認 Vercel 使用新版 /exec 網址'});
+    if (!response.ok)
+      return send(502,{error:'Apps Script 後端回傳 HTTP '+response.status});
+    if (!response.headers.get('content-type')?.includes('application/json'))
+      return send(502,{error:'後端回傳網頁，請確認 /exec 指向新版 PayrollApi.gs 部署'});
     const result = await response.json();
     if (!result.ok) return send(400,{error:result.error || '資料處理失敗'});
     return send(200,result.data);
