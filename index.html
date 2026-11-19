@@ -27,31 +27,31 @@ button{min-height:44px}
   header{gap:12px}
   main{padding-top:16px}
 }
-#dashboard,#bills{grid-column:1/-1}.totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.totals p{background:#f1f6f4;border-radius:12px;padding:12px;margin:0}.totals strong{display:block;margin-top:8px;font-size:clamp(18px,3vw,28px)}#bills summary{cursor:pointer;color:#176357;font-weight:700;padding:12px 0}#billMonth{grid-column:1/-1;margin:0}#bills li{padding:8px 0}#bills li button{margin-top:6px}@media(max-width:460px){.totals{grid-template-columns:1fr}.totals p{display:flex;align-items:center;justify-content:space-between;gap:8px}.totals strong{margin:0}}</style></head><body><main>
+#dashboard,#bills{grid-column:1/-1}.totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.totals p{background:#f1f6f4;border-radius:12px;padding:12px;margin:0}.totals strong{display:block;margin-top:8px;font-size:clamp(18px,3vw,28px)}#bills summary{cursor:pointer;color:#176357;font-weight:700;padding:12px 0}#billMonth{grid-column:1/-1;margin:0}#bills li{padding:8px 0}#bills li button{margin-top:6px}@media(max-width:460px){.totals{grid-template-columns:1fr}.totals p{display:flex;align-items:center;justify-content:space-between;gap:8px}.totals strong{margin:0}}body{background:#f2f6fb;color:#20374c}body:has(#navigation:not([hidden])) main{margin-left:210px;width:min(calc(100% - 210px),1200px)}#navigation{position:fixed;inset:0 auto 0 0;width:210px;padding:30px 16px;background:#fff;border-right:1px solid #dbe6f1;display:flex;flex-direction:column;gap:10px}#navigation strong{padding:8px 12px 20px;color:#526e88}#navigation button{text-align:left;background:transparent;color:#3f5e79;border:0;border-radius:10px}#navigation button[aria-current=page]{background:#e8f1fb;color:#1f527b;font-weight:bold}#analysis{grid-column:1/-1}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}th,td{padding:10px 4px;text-align:right;border-bottom:1px solid #dbe6f1}th:first-child,td:first-child{text-align:left}@media(max-width:800px){body:has(#navigation:not([hidden])) main{margin:auto;width:100%}#navigation{position:sticky;inset:0 0 auto;width:auto;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:8px 12px;border-right:0;border-bottom:1px solid #dbe6f1}#navigation strong{display:none}#navigation button{text-align:center}} </style></head><body><nav id="navigation" aria-label="薪資功能" hidden><strong>薪資與繳費</strong><button type="button" data-page="payments" aria-current="page">本月應支付</button><button type="button" data-page="bills">帳單與代繳</button><button type="button" data-page="records">薪資與請假</button><button type="button" data-page="analysis">支出分析</button></nav><main>
 <header><a href="https://wens-space.vercel.app/">返回 Wen’s Space</a><button id="logout" type="button" hidden>登出</button><h1>薪資與繳費紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a></header>
 <section id="login" hidden><h2>輸入薪資頁密碼</h2><form><label>密碼<input name="password" type="password" autocomplete="current-password" required></label><button>登入</button></form></section><div class="bar" id="filters" hidden><label>年份<select id="year"></select></label><label>月份<select id="month"></select></label></div>
 <p id="status" role="status" aria-live="polite"></p>
-<div id="content" hidden><section id="dashboard"><h2>支出總覽</h2><div class="totals"><p>本月實付<strong id="monthTotal">—</strong></p><p>2026 年累計實付<strong id="yearTotal">—</strong></p><p>待繳帳單<strong id="pendingTotal">—</strong></p></div><p id="breakdown"></p><p id="yearStatus" role="status"></p></section>
-<section><h2>本月紀錄</h2><p id="overview"></p></section>
-<section><h2>薪資</h2><p id="summary"></p><form id="salary">
+<div id="content" hidden><section id="dashboard" data-panel="payments"><h2>本月應支付費用</h2><div class="totals"><p>薪資待付估計<strong id="salaryDue">—</strong></p><p>本月到期未繳<strong id="dueCount">—</strong></p></div><p id="dueNote"></p><ul id="dueBills"></ul><h3>實付摘要</h3><div class="totals"><p>本月實付<strong id="monthTotal">—</strong></p><p>2026 年累計實付<strong id="yearTotal">—</strong></p><p>待繳帳單<strong id="pendingTotal">—</strong></p></div><p id="breakdown"></p><p id="yearStatus" role="status"></p></section>
+<section data-panel="records" hidden><h2>本月紀錄</h2><p id="overview"></p></section>
+<section data-panel="records" hidden><h2>薪資</h2><p id="summary"></p><form id="salary">
 <label>表列現金參考<input name="reference" type="number" min="0" step="1"></label>
 <label>實際付現日<input name="paidDate" type="date"></label>
 <label>實付金額<input name="amount" type="number" min="0" step="1"></label>
 <label>已簽收<input name="received" type="checkbox"></label><button>儲存薪資</button></form></section>
-<section><h2>請假紀錄</h2><ul id="leaveList"></ul><form id="leave">
+<section data-panel="records" hidden><h2>請假紀錄</h2><ul id="leaveList"></ul><form id="leave">
 <input name="id" type="hidden"><label>請假開始<input name="start" type="date"></label>
 <label>請假結束（選填）<input name="end" type="date"></label>
 <label>調整金額<input name="amount" type="number" step="1" required></label>
 <label>備註<input name="note" maxlength="500"></label><button>儲存請假</button>
 <button class="secondary" type="reset">新增一筆</button></form></section>
-<section id="bills"><h2>帳單與代繳</h2><p>收到帳單先記期限，繳完再補實繳日期和金額。</p><details id="billEditor"><summary id="billTitle">新增帳單</summary><form id="fee"><p id="billMonth"></p>
+<section id="bills" data-panel="bills" hidden><h2>帳單與代繳</h2><p>收到帳單先記期限，繳完再補實繳日期和金額。</p><details id="billEditor"><summary id="billTitle">新增帳單</summary><form id="fee"><p id="billMonth"></p>
 <input name="id" type="hidden"><label>項目<select name="category"><option>健保費</option><option>就業安定費</option><option>職災保險費</option><option>雇主意外險</option><option>其他代付</option></select></label>
 <label>帳單涵蓋期間<input name="period" maxlength="500"></label>
 <label>繳費期限<input name="due" type="date"></label><label>實際繳費日<input name="paidDate" type="date"></label>
 <label>實付金額<input name="amount" type="number" min="0" step="1"></label><label>備註<input name="note" maxlength="500"></label><button>儲存帳單</button>
 <button class="secondary" type="reset">清除表單</button></form></details><h3>待繳及待補資料</h3><ul id="pendingBills"></ul><h3>本月已繳</h3><ul id="paidBills"></ul></section>
 
-</div></main><script>
+<section id="analysis" data-panel="analysis" hidden><h2>2026 年支出分析</h2><p id="analysisNote"></p><table><thead><tr><th scope="col">月份</th><th scope="col">薪資</th><th scope="col">代繳</th><th scope="col">合計</th></tr></thead><tbody id="analysisRows"></tbody></table></section></div></main><script>
 const el = id => document.getElementById(id);
 const year = el('year'), month = el('month');
 const salary = el('salary'), leave = el('leave'), fee = el('fee');
@@ -96,6 +96,17 @@ function render(result) {
     +' ｜ 請假 '+data.leave.length+' 筆 ｜ 繳費 '+data.fees.length+' 筆';
   el('sheet').href=result.sheet;el('sheet').hidden=false;el('content').hidden=false;
 }
+function selectPage(page) {
+  for (const item of document.querySelectorAll('[data-panel]')) item.hidden=item.dataset.panel!==page;
+  for (const button of document.querySelectorAll('[data-page]')) {
+    if (button.dataset.page===page) button.setAttribute('aria-current','page');
+    else button.removeAttribute('aria-current');
+  }
+}
+el('navigation').onclick=event=>{
+  const button=event.target.closest('[data-page]');
+  if(button) selectPage(button.dataset.page);
+};
 function renderTotals() {
   const all = [...records.values()];
   const bills = all.flatMap(data=>data.fees);
@@ -115,6 +126,7 @@ function renderTotals() {
   el('breakdown').textContent=complete?'本月薪資 '+formatted(monthSalary)+' ｜ 代繳 '+formatted(monthFees):'';
   const caption = r => [r[1],r[2],r[3]&&'期限 '+r[3],r[4]&&'實繳 '+r[4],hasAmount(r[5])?'實付 '+formatted(r[5]):'',r[6]].filter(Boolean).join(' · ');
   const edit = row => {
+    selectPage('bills');
     billMonth=row[0];
     el('billMonth').textContent='帳單歸檔月份 '+billMonth;
     el('billTitle').textContent='編輯帳單';
@@ -124,6 +136,29 @@ function renderTotals() {
   };
   list('pendingBills',pending,caption,edit,complete?'目前沒有待繳帳單':'目前載入的月份沒有待繳帳單','補繳費／編輯');
   list('paidBills',monthBills,caption,edit);
+  const dueBills=pending.filter(row=>row[3]?.slice(0,7)===current() && !row[4]);
+  const dueSalary=records.get(current());
+  const reference=dueSalary?.salary[2];
+  const expected=hasAmount(reference)?Math.max(0,Number(reference)+sum(dueSalary.leave,3)):null;
+  const salaryRow=dueSalary?.salary;
+  const remaining=expected===null?null:Math.max(0,expected-(salaryRow[3] && hasAmount(salaryRow[4])?Number(salaryRow[4]):0));
+  el('salaryDue').textContent=remaining===null?'待補資料':formatted(remaining);
+  el('dueCount').textContent=complete?dueBills.length+' 筆':'—';
+  el('dueNote').textContent='薪資依當期參考額、請假調整及已登記實付估算。未繳帳單目前依期限列示筆數。';
+  list('dueBills',dueBills,caption,edit,complete?'本月沒有到期未繳帳單':'帳單載入中','補繳費／編輯');
+  el('analysisNote').textContent=complete?'按實際付款日期歸入月份。':'部分月份尚未讀取，完整金額待確認。';
+  const table=el('analysisRows');
+  table.replaceChildren();
+  for(const option of month.options) {
+    const key='2026-'+option.value;
+    const salarySpent=sum(salaryPaid.filter(row=>row[3].slice(0,7)===key),4);
+    const feesSpent=sum(yearPaid.filter(row=>row[4].slice(0,7)===key),5);
+    const row=table.insertRow();
+    const heading=document.createElement('th');
+    heading.scope='row';heading.textContent=option.label;row.append(heading);
+    for(const value of [salarySpent,feesSpent,salarySpent+feesSpent])
+      row.insertCell().textContent=complete?formatted(value):'—';
+  }
 }
 async function loadYear() {
   el('yearStatus').textContent='正在彙整 2026 年各月資料…';
@@ -143,7 +178,7 @@ async function api(action,payload={}) {
   return result;
 }
 function showLogin() {
-  for (const id of ['filters','content','logout','sheet']) el(id).hidden=true;
+  for (const id of ['filters','content','logout','sheet','navigation']) el(id).hidden=true;
   el('login').hidden=false;
 }
 el('login').querySelector('form').onsubmit=async event=>{
@@ -169,7 +204,7 @@ async function request(action,pending,success,...args) {
     render(records.get(current()) || result);
     if (records.size < month.options.length) await loadYear();
     el('login').hidden=true;
-    el('filters').hidden=el('logout').hidden=false;
+    el('filters').hidden=el('logout').hidden=el('navigation').hidden=false;
     el('status').textContent=success;
   } catch (error) {
     if (error.status===401) showLogin();
