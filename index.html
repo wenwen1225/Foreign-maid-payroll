@@ -1,5 +1,32 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><title>薪資與繳費紀錄</title><meta name="viewport" content="width=device-width, initial-scale=1"><style>
 *{box-sizing:border-box}body{margin:0;background:#f1f6f4;color:#152d29;font:16px system-ui,sans-serif}main{max-width:840px;margin:auto;padding:24px 16px 56px}h1,h2{margin:0 0 12px}h2{font-size:20px}header,.bar,form{display:flex;flex-wrap:wrap;gap:12px;align-items:end}header{align-items:center;justify-content:space-between}.bar{margin:16px 0}section{background:white;border:1px solid #d7e5e0;border-radius:16px;padding:20px;margin:14px 0}label{display:grid;gap:5px;font-size:14px}input,select,button{font:inherit;border:1px solid #91aaa3;border-radius:8px;padding:8px;min-height:42px;max-width:100%}button{background:#176357;color:white;cursor:pointer}button.secondary{color:#176357;background:white}button:disabled{opacity:.5}a{color:#176357}ul{padding-left:20px}li{margin:8px 0}li button{margin-left:8px}p{margin:8px 0 12px}#status{min-height:1.5em}[hidden]{display:none!important}
+
+main{width:min(100%,1200px);max-width:none;padding:24px clamp(16px,4vw,44px) 56px}
+header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px 20px;margin-bottom:20px}
+header h1{grid-column:1/-1;margin:0;font-size:clamp(27px,5vw,42px);line-height:1.2}
+#sheet{grid-column:1/-1;justify-self:start}
+#logout{justify-self:end}
+#filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-width:420px}
+#content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#content section{min-width:0;margin:0;overflow-wrap:anywhere}
+#content section:first-child{grid-column:1/-1}
+#login{max-width:460px}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:end}
+#login form{grid-template-columns:minmax(0,1fr) auto}
+form input:not([type=checkbox]),form select,#filters select{width:100%;min-width:0}
+form input[type=checkbox]{width:20px;height:20px;min-height:0;margin:0;accent-color:#176357}
+form label:has(input[type=checkbox]){display:flex;align-items:center;gap:8px;min-height:44px}
+button{min-height:44px}
+#status{overflow-wrap:anywhere}
+@media(max-width:760px){
+  #content{grid-template-columns:minmax(0,1fr);gap:12px}
+  #content section{padding:16px}
+}
+@media(max-width:420px){
+  form,#login form{grid-template-columns:minmax(0,1fr)}
+  header{gap:12px}
+  main{padding-top:16px}
+}
 </style></head><body><main>
 <header><a href="https://wens-space.vercel.app/">返回 Wen’s Space</a><button id="logout" type="button" hidden>登出</button><h1>薪資與繳費紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a></header>
 <section id="login" hidden><h2>輸入薪資頁密碼</h2><form><label>密碼<input name="password" type="password" autocomplete="current-password" required></label><button>登入</button></form></section><div class="bar" id="filters" hidden><label>年份<select id="year"></select></label><label>月份<select id="month"></select></label></div>
