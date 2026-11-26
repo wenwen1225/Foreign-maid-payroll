@@ -29,7 +29,7 @@ button{min-height:44px}
 }
 #dashboard,#bills{grid-column:1/-1}.totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.totals p{background:#e7f6ef;border-radius:12px;padding:12px;margin:0}.totals strong{display:block;margin-top:8px;font-size:clamp(18px,3vw,28px)}#bills summary{cursor:pointer;color:#176357;font-weight:700;padding:12px 0}#billMonth{grid-column:1/-1;margin:0}#bills li{padding:8px 0}#bills li button{margin-top:6px}@media(max-width:460px){.totals{grid-template-columns:1fr}.totals p{display:flex;align-items:center;justify-content:space-between;gap:8px}.totals strong{margin:0}}body{background:#eef8f4;color:#173e35}body:has(#navigation:not([hidden])) main{margin-left:210px;width:min(calc(100% - 210px),1200px)}#navigation{position:fixed;inset:0 auto 0 0;width:210px;padding:30px 16px;background:#fff;border-right:1px solid #d3e9df;display:flex;flex-direction:column;gap:10px}#navigation strong{padding:8px 12px 20px;color:#3a6659}#navigation button{text-align:left;background:transparent;color:#315e52;border:0;border-radius:10px}#navigation button[aria-current=page]{background:#d8f1e7;color:#125947;font-weight:bold}#analysis{grid-column:1/-1}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}th,td{padding:10px 4px;text-align:right;border-bottom:1px solid #d3e9df}th:first-child,td:first-child{text-align:left}@media(max-width:800px){body:has(#navigation:not([hidden])) main{margin:auto;width:100%}#navigation{position:sticky;inset:0 0 auto;width:auto;z-index:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:8px 12px;border-right:0;border-bottom:1px solid #d3e9df}#navigation strong{display:none}#navigation button{text-align:center}} button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #23775f;outline-offset:3px}#navigation button:hover,#navigation button[aria-current=page]{background:#d8f1e7}.totals strong{color:#145f4d}
 </style></head><body><nav id="navigation" aria-label="薪資功能" hidden><strong>薪資與繳費</strong><button type="button" data-page="payments" aria-current="page">本月應支付</button><button type="button" data-page="bills">帳單與代繳</button><button type="button" data-page="records">薪資與請假</button><button type="button" data-page="analysis">支出分析</button></nav><main>
-<header><a href="https://wens-space.vercel.app/">返回 Wen’s Space</a><button id="logout" type="button" hidden>登出</button><h1>外傭薪資紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a></header>
+<header><a href="https://wens-space.vercel.app/">返回 Wen’s Space</a><button id="sync" type="button" class="secondary" hidden>同步雲端</button><button id="logout" type="button" hidden>登出</button><h1>外傭薪資紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a></header>
 <section id="login" hidden><h2>輸入薪資頁密碼</h2><form><label>密碼<input name="password" type="password" autocomplete="current-password" required></label><button>登入</button></form></section><div class="bar" id="filters" hidden><label>年份<select id="year"></select></label><label>月份<select id="month"></select></label></div>
 <p id="status" role="status" aria-live="polite"></p>
 <div id="content" hidden><section id="dashboard" data-panel="payments"><h2>本月應支付費用</h2><div class="totals"><p>薪資待付估計<strong id="salaryDue">—</strong></p><p>本月到期未繳<strong id="dueCount">—</strong></p></div><p id="dueNote"></p><ul id="dueBills"></ul><h3>實付摘要</h3><div class="totals"><p>本月實付<strong id="monthTotal">—</strong></p><p>2026 年累計實付<strong id="yearTotal">—</strong></p><p>待繳帳單<strong id="pendingTotal">—</strong></p></div><p id="breakdown"></p><p id="yearStatus" role="status"></p></section>
@@ -59,6 +59,26 @@ const salary = el('salary'), leave = el('leave'), fee = el('fee');
 const today = new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit'}).format(new Date());
 year.add(new Option('2026 年','2026'));
 const records = new Map();
+const cacheKey = 'wens-payroll-records-v1';
+function restoreCache() {
+  try {
+    const entries = JSON.parse(localStorage.getItem(cacheKey) || '[]');
+    for (const [key,value] of entries) {
+      if (/^2026-\d{2}$/.test(key) && Array.isArray(value.salary) && Array.isArray(value.leave) && Array.isArray(value.fees)) records.set(key,value);
+    }
+  } catch { records.clear(); }
+}
+function persistCache() {
+  try { localStorage.setItem(cacheKey,JSON.stringify([...records])); } catch {}
+}
+function clearCache() {
+  records.clear();
+  try { localStorage.removeItem(cacheKey); } catch {}
+}
+function showContent() {
+  el('login').hidden=true;
+  for (const id of ['filters','logout','navigation','sync']) el(id).hidden=false;
+}
 let billMonth = '';
 const current = () => year.value + '-' + month.value;
 function months(preferred) {
@@ -161,13 +181,18 @@ function renderTotals() {
       row.insertCell().textContent=complete?formatted(value):'—';
   }
 }
-async function loadYear() {
+async function loadYear(refresh=false) {
   el('yearStatus').textContent='正在彙整 2026 年各月資料…';
-  const missing=[...month.options].map(option=>'2026-'+option.value).filter(key=>!records.has(key));
+  const missing=[...month.options].map(option=>'2026-'+option.value).filter(key=>refresh || !records.has(key));
   const results=await Promise.allSettled(missing.map(async key=>[key,await api('loadMonth',{args:[key]})]));
   for (const result of results) if (result.status==='fulfilled') records.set(...result.value);
+  persistCache();
+  if (records.has(current())) render(records.get(current()));
+  const failed=results.filter(result=>result.status==='rejected');
+  if (failed.some(result=>result.reason.status===401)) {showLogin();return false;}
   renderTotals();
-  el('yearStatus').textContent=records.size===month.options.length?'':'部分月份讀取失敗，請切換月份重試。';
+  el('yearStatus').textContent=failed.length?'部分月份同步失敗，請按同步雲端重試。':'';
+  return !failed.length;
 }
 function busy(active) {
   document.querySelectorAll('button,select').forEach(control=>{control.disabled=active;});
@@ -179,8 +204,8 @@ async function api(action,payload={}) {
   return result;
 }
 function showLogin() {
-  records.clear();
-  for (const id of ['filters','content','logout','sheet','navigation']) el(id).hidden=true;
+  clearCache();
+  for (const id of ['filters','content','logout','sheet','navigation','sync']) el(id).hidden=true;
   el('login').hidden=false;
 }
 el('login').querySelector('form').onsubmit=async event=>{
@@ -189,7 +214,7 @@ el('login').querySelector('form').onsubmit=async event=>{
   button.disabled=true;
   try {
     await api('login',{password:form.elements.password.value});
-    form.reset(); el('login').hidden=true; load();
+    form.reset(); el('login').hidden=true; restoreCache(); await load();
   } catch (error) { el('status').textContent=error.message; }
   finally { button.disabled=false; }
 };
@@ -203,25 +228,29 @@ async function request(action,pending,success,...args) {
     const result=await api(action,{args});
     const key=action==='loadMonth'?args[0]:args[1];
     records.set(key,result);
+    persistCache();
     render(records.get(current()) || result);
-    if (records.size < month.options.length) await loadYear();
-    el('login').hidden=true;
-    el('filters').hidden=el('logout').hidden=el('navigation').hidden=false;
+    showContent();
+    if (records.size < month.options.length && !(await loadYear())) {
+      el('status').textContent=action==='saveRecord'?'已儲存，部分月份尚未同步':'部分月份尚未同步';
+      return;
+    }
     el('status').textContent=success;
   } catch (error) {
     if (error.status===401) showLogin();
     el('status').textContent=error.message||'處理失敗，請重試';
   } finally { busy(false); }
 }
-function load() {
+async function load() {
   const key=current();
   if (records.has(key)) {
     render(records.get(key));
+    showContent();
     el('status').textContent='';
     return;
   }
   el('content').hidden=true;
-  request('loadMonth','讀取中…','',key);
+  await request('loadMonth','讀取中…','',key);
 }
 year.onchange=()=>{months(month.value);load();};month.onchange=load;
 leave.onreset=()=>{leave.elements.id.value='';};
@@ -236,5 +265,25 @@ for (const [form,type] of [[salary,'薪資'],[leave,'請假'],[fee,'繳費']]) {
     request('saveRecord','儲存中…','已儲存',type,form===fee && billMonth ? billMonth : current(),Object.fromEntries(new FormData(form)));
   };
 }
-load();
+el('sync').onclick=async()=>{
+  busy(true);el('status').textContent='同步雲端中…';
+  try {
+    const ok=await loadYear(true);
+    el('status').textContent=ok?'已同步雲端資料':'同步未完成，請重試';
+  } catch(error) {
+    el('status').textContent=error.message||'同步失敗';
+  } finally {busy(false);}
+};
+async function start() {
+  busy(true);
+  try {
+    await api('session');
+    restoreCache();
+    await load();
+  } catch(error) {
+    if(error.status===401) showLogin();
+    else {el('status').textContent='連線失敗，請重新整理網頁';}
+  } finally {busy(false);}
+}
+start();
 </script></body></html>
