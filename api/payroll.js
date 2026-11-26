@@ -1,4 +1,4 @@
-const API_VERSION = '1.1.0';
+const API_VERSION = '1.2.0';
 const { createHash, createHmac, timingSafeEqual } = require('node:crypto');
 
 const equal = (a, b) => {
