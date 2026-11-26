@@ -31,8 +31,10 @@ button{min-height:44px}
 #status:not(:empty){position:sticky;bottom:12px;z-index:3;background:#fff;border:1px solid #cae5da;border-radius:10px;padding:10px 14px;box-shadow:0 3px 12px #173e3515}#versionBox{grid-column:1/-1;justify-self:start;display:flex;align-items:center;gap:12px;padding:10px 12px;background:#fff;border:1px solid #d3e9df;border-radius:12px;max-width:100%;color:#315e52;font-size:13px}#versionInfo{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}#versionDetail{overflow-wrap:anywhere;color:#52776a}#versionStatus{font-weight:700;display:inline-flex;padding:3px 8px;border-radius:6px;background:#eef5f1}#versionStatus[data-state=ok]{color:#176357;background:#d8f1e7}#versionStatus[data-state=error]{color:#a44537;background:#fbe6df}#checkVersionBtn{flex-shrink:0;min-height:36px;padding:6px 12px;font-size:13px;white-space:nowrap}@media(max-width:420px){#versionBox{width:100%;justify-content:space-between;gap:8px}#checkVersionBtn{min-height:40px}}
  .quick-actions{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 20px}.payment-card{padding:16px;border:1px solid #cae5da;background:#f6fcf9;border-radius:14px;margin:16px 0}.payment-card h3{margin:0 0 8px}.payment-card p{margin:6px 0}.record-list{list-style:none;padding:0;margin:10px 0}.record-list li{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:1px solid #e0ebe6;padding:12px 0;margin:0}.record-list li button{margin:0}.field-note{font-size:13px;color:#42665b;line-height:1.5;margin:0}.field-note:empty{display:none}.form-title{margin:0 0 10px}.editor-actions{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1}.editor-actions button{flex:1 1 130px}#leaveEditor{grid-column:1/-1}#leaveWeekday{display:block;color:#42665b;font-size:13px;min-height:18px}#billEditor{padding:12px;border:1px solid #d3e9df;border-radius:12px}#billEditor[open]{margin-bottom:20px}#billTitle{padding:4px 0}@media(max-width:460px){.quick-actions button{flex:1 1 100%}.record-list li button{width:100%}}
 #navigation .home-link{display:block;text-decoration:none;color:#315e52;border-radius:10px;padding:12px;line-height:20px;font-weight:600;border:1px solid #d3e9df;margin-bottom:8px}#navigation .home-link:hover{background:#d8f1e7}body:has(#navigation:not([hidden])) .login-home{display:none}body:has(#navigation:not([hidden])) #sync{justify-self:start}@media(max-width:800px){#navigation .home-link{grid-column:1/-1;margin:0;text-align:center;padding:7px 12px;font-size:14px}}
+ 
+.analysis-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0 24px}.chart-card{min-width:0;border:1px solid #d3e9df;border-radius:14px;padding:16px;background:#f8fcfa}.chart-card-wide{grid-column:1/-1}.chart-card h3{font-size:16px;margin:0 0 12px}.chart-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#47695e;margin:10px 0}.chart-legend span{display:inline-flex;align-items:center;gap:5px}.chart-legend i{height:10px;width:10px;border-radius:3px}.chart-salary{background:#287962}.chart-fees{background:#91c9bc}.chart-row{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(68px,auto);align-items:center;gap:8px;margin:10px 0;font-size:12px}.chart-track{height:17px;display:flex;overflow:hidden;border-radius:5px;background:#e5f0eb}.chart-track span{display:block;height:100%}.chart-value{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.chart-share{display:flex;height:24px;overflow:hidden;border-radius:6px;background:#e5f0eb;margin:14px 0}.chart-share span{height:100%}.chart-stat{display:flex;justify-content:space-between;gap:12px;margin:9px 0;font-size:14px}.chart-stat strong{font-variant-numeric:tabular-nums;white-space:nowrap}.chart-muted{font-size:13px;color:#52776a}.chart-category{margin:12px 0}.chart-category .chart-stat{margin:0 0 5px}.chart-category .chart-track{height:9px}.chart-category .chart-track span{background:#91c9bc}@media(max-width:640px){.analysis-charts{grid-template-columns:minmax(0,1fr)}.chart-card{padding:12px}.chart-card-wide{grid-column:auto}.chart-row{gap:6px;grid-template-columns:34px minmax(0,1fr) auto}}
 </style></head><body><nav id="navigation" aria-label="薪資功能" hidden><strong>薪資與繳費</strong><a class="home-link" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button type="button" data-page="payments" aria-current="page">本月應支付</button><button type="button" data-page="bills">帳單與代繳</button><button type="button" data-page="records">薪資、請假與歷史紀錄</button><button type="button" data-page="analysis">支出分析</button></nav><main>
-<header><a class="login-home" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button id="sync" type="button" class="secondary" hidden>同步雲端</button><button id="logout" type="button" hidden>登出</button><h1>外傭薪資紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a><div id="versionBox"><div id="versionInfo"><span id="versionStatus" role="status">尚未檢查</span><span id="versionDetail">網站 v1.2.3</span></div><button id="checkVersionBtn" class="secondary" type="button">檢查版本</button></div></header>
+<header><a class="login-home" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button id="sync" type="button" class="secondary" hidden>同步雲端</button><button id="logout" type="button" hidden>登出</button><h1>外傭薪資紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a><div id="versionBox"><div id="versionInfo"><span id="versionStatus" role="status">尚未檢查</span><span id="versionDetail">網站 v1.3.0</span></div><button id="checkVersionBtn" class="secondary" type="button">檢查版本</button></div></header>
 <section id="login" hidden><h2>輸入薪資頁密碼</h2><form><label>密碼<input name="password" type="password" autocomplete="current-password" required></label><button>登入</button></form></section><div class="bar" id="filters" hidden><label>年份<select id="year"></select></label><label>月份<select id="month"></select></label></div>
 <p id="status" role="status" aria-live="polite"></p>
 <div id="content" hidden><section id="dashboard" data-panel="payments"><h2>本月應支付費用</h2><p id="selectedMonth" class="field-note"></p><div class="quick-actions"><button id="quickSalary" type="button">登記薪資付款</button></div><div class="totals"><p>薪資待付估計<strong id="salaryDue">—</strong></p><p>本月到期及逾期<strong id="dueCount">—</strong></p></div><div class="payment-card"><h3>薪資付款</h3><p id="salaryPaymentInfo"></p><p id="salaryPaymentState" class="field-note"></p></div><h3>本月到期及逾期未繳費用</h3><ul id="dueBills" class="record-list"></ul><p id="dueNote" class="field-note"></p><h3>實付摘要</h3><div class="totals"><p>本月實付<strong id="monthTotal">—</strong></p><p>2026 年累計實付<strong id="yearTotal">—</strong></p><p>待繳帳單<strong id="pendingTotal">—</strong></p></div><p id="breakdown"></p><p id="yearStatus" role="status"></p></section>
@@ -53,7 +55,7 @@ button{min-height:44px}
 <label>繳費期限<input name="due" type="date"></label><label>實際繳費日<input name="paidDate" type="date"></label>
 <label>實付金額<input name="amount" type="number" min="0" step="1"></label><label>備註<input name="note" maxlength="500"></label><div class="editor-actions"><button id="saveBill" type="submit">儲存帳單</button><button class="secondary" type="reset">取消編輯／新增帳單</button></div></form></details><h3>待繳及待補資料</h3><ul id="pendingBills" class="record-list"></ul><h3>本月已繳</h3><ul id="paidBills" class="record-list"></ul></section>
 
-<section data-panel="records" hidden><h2>本月歸檔帳單</h2><ul id="archivedBills" class="record-list"></ul></section><section id="analysis" data-panel="analysis" hidden><h2>2026 年支出分析</h2><p id="analysisNote"></p><table><thead><tr><th scope="col">月份</th><th scope="col">薪資</th><th scope="col">代繳</th><th scope="col">合計</th></tr></thead><tbody id="analysisRows"></tbody></table></section></div></main><script>
+<section data-panel="records" hidden><h2>本月歸檔帳單</h2><ul id="archivedBills" class="record-list"></ul></section><section id="analysis" data-panel="analysis" hidden><h2>2026 年支出分析</h2><p id="analysisNote"></p><div id="analysisCharts" class="analysis-charts"></div><h3>每月支出明細</h3><table><thead><tr><th scope="col">月份</th><th scope="col">薪資</th><th scope="col">代繳</th><th scope="col">合計</th></tr></thead><tbody id="analysisRows"></tbody></table></section></div></main><script>
 const el = id => document.getElementById(id);
 const year = el('year'), month = el('month');
 const salary = el('salary'), leave = el('leave'), fee = el('fee');
@@ -214,16 +216,92 @@ function renderTotals() {
   list('dueBills',dueBills,caption,row=>edit(row,true),complete?'本月沒有到期或逾期未繳帳單':'帳單載入中','完成繳費',edit);
   el('analysisNote').textContent=complete?'按實際付款日期歸入月份。':'部分月份尚未讀取，完整金額待確認。';
   const table=el('analysisRows');
+  const monthly=[];
   table.replaceChildren();
   for(const option of month.options) {
     const key='2026-'+option.value;
     const salarySpent=sum(salaryPaid.filter(row=>row[3].slice(0,7)===key),4);
     const feesSpent=sum(yearPaid.filter(row=>row[4].slice(0,7)===key),5);
+    monthly.push({label:option.label,salary:salarySpent,fees:feesSpent,total:salarySpent+feesSpent});
     const row=table.insertRow();
     const heading=document.createElement('th');
     heading.scope='row';heading.textContent=option.label;row.append(heading);
     for(const value of [salarySpent,feesSpent,salarySpent+feesSpent])
       row.insertCell().textContent=complete?formatted(value):'—';
+  }
+  renderCharts(monthly,yearPaid,complete);
+}
+function renderCharts(monthly,paidBills,complete) {
+  const root=el('analysisCharts');
+  root.replaceChildren();
+  const node=(tag,cls,content)=>{
+    const item=document.createElement(tag);
+    if(cls) item.className=cls;
+    if(content!==undefined) item.textContent=content;
+    return item;
+  };
+  const card=(title,wide=false)=>{
+    const item=node('div','chart-card'+(wide?' chart-card-wide':''));
+    item.append(node('h3','',title));
+    root.append(item);
+    return item;
+  };
+  if(!complete) {
+    card('圖表資料',true).append(node('p','chart-muted','部分月份尚未同步，請完成同步後查看圖表。'));
+    return;
+  }
+  const total=monthly.reduce((sum,m)=>sum+m.total,0);
+  const salaryTotal=monthly.reduce((sum,m)=>sum+m.salary,0);
+  const feeTotal=monthly.reduce((sum,m)=>sum+m.fees,0);
+  const bar=(amount,max,cls)=>{
+    const item=node('span',cls);
+    item.style.width=(max>0?amount/max*100:0)+'%';
+    return item;
+  };
+  const stat=(label,value)=>{
+    const line=node('div','chart-stat');
+    line.append(node('span','',label),node('strong','',value));
+    return line;
+  };
+  const row=(label,segments,max,amount)=>{
+    const item=node('div','chart-row');
+    const track=node('div','chart-track');
+    for(const [value,cls] of segments) track.append(bar(value,max,cls));
+    item.append(node('span','',label),track,node('span','chart-value',formatted(amount)));
+    return item;
+  };
+  const monthlyCard=card('每月支出趨勢',true);
+  const legend=node('div','chart-legend');
+  for(const [label,cls] of [['薪資','chart-salary'],['代繳費用','chart-fees']]){
+    const entry=node('span');
+    entry.append(node('i',cls),node('span','',label));
+    legend.append(entry);
+  }
+  monthlyCard.append(legend);
+  const monthMax=Math.max(0,...monthly.map(m=>m.total));
+  for(const m of monthly) monthlyCard.append(row(m.label,[[m.salary,'chart-salary'],[m.fees,'chart-fees']],monthMax,m.total));
+  const share=card('年度支出占比');
+  const shareBar=node('div','chart-share');
+  shareBar.append(bar(salaryTotal,total,'chart-salary'),bar(feeTotal,total,'chart-fees'));
+  share.append(stat('年度總支出',formatted(total)),shareBar);
+  const percent=value=>total>0?(value/total*100).toFixed(1)+'%':'0%';
+  share.append(stat('薪資 '+percent(salaryTotal),formatted(salaryTotal)),stat('代繳 '+percent(feeTotal),formatted(feeTotal)));
+  const categories=card('代繳費用分類');
+  const grouped=new Map();
+  for(const bill of paidBills) grouped.set(bill[1],(grouped.get(bill[1])||0)+Number(bill[5]));
+  if(!grouped.size) categories.append(node('p','chart-muted','本年度尚無已繳費用。'));
+  for(const [name,value] of [...grouped].sort((a,b)=>b[1]-a[1])){
+    const item=node('div','chart-category');
+    const track=node('div','chart-track');
+    track.append(bar(value,feeTotal,'chart-fees'));
+    item.append(stat(name,formatted(value)),track);
+    categories.append(item);
+  }
+  const cumulative=card('年度累計支出',true);
+  let running=0;
+  for(const m of monthly){
+    running+=m.total;
+    cumulative.append(row(m.label,[[running,'chart-salary']],total,running));
   }
 }
 async function loadYear(refresh=false) {
@@ -334,7 +412,7 @@ async function start() {
     else {el('status').textContent='連線失敗，請重新整理網頁';}
   } finally {busy(false);}
 }
-const APP_VERSION = '1.2.3';
+const APP_VERSION = '1.3.0';
 el('checkVersionBtn').onclick=async()=>{
   const button=el('checkVersionBtn');
   button.disabled=true;
