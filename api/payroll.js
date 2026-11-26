@@ -1,4 +1,4 @@
-const API_VERSION = '1.3.1';
+const API_VERSION = '1.4.0';
 const { createHash, createHmac, timingSafeEqual } = require('node:crypto');
 
 const equal = (a, b) => {
@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
     return send(200,{version:API_VERSION});
   }
   if (body.action === 'session') return send(200,{ok:true});
-  if (!['loadMonth','saveRecord'].includes(body.action) || !Array.isArray(body.args))
+  if (!['loadMonth','saveRecord','deleteRecord'].includes(body.action) || !Array.isArray(body.args))
     return send(400,{error:'操作錯誤'});
   try {
     let url;
