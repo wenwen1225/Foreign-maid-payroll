@@ -1,3 +1,4 @@
+const API_VERSION = '1.1.0';
 const { createHash, createHmac, timingSafeEqual } = require('node:crypto');
 
 const equal = (a, b) => {
@@ -33,6 +34,9 @@ module.exports = async function handler(req, res) {
   const token = /(?:^|;\s*)payroll_session=(\d+)\.([\da-f]{64})(?:;|$)/.exec(req.headers.cookie || '');
   if (!token || Number(token[1]) <= Date.now() || !equal(token[2],sign(token[1])))
     return send(401,{error:'請輸入薪資頁密碼'});
+  if (body.action === 'version') {
+    return send(200,{version:API_VERSION});
+  }
   if (body.action === 'session') return send(200,{ok:true});
   if (!['loadMonth','saveRecord'].includes(body.action) || !Array.isArray(body.args))
     return send(400,{error:'操作錯誤'});
