@@ -71,8 +71,9 @@ button{min-height:44px}
 }
  .payment-reminder{border:1px solid #e8c887;background:#fff6dc;color:#79591d;border-radius:10px;padding:12px;margin:12px 0}.payment-reminder ul{margin:5px 0 0;padding-left:20px}.payment-reminder li{margin:5px 0}button.danger{background:#fff;color:#a13b36;border-color:#e5b5ae}button.danger:hover{background:#fce9e5}
  .payment-reminder li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.payment-reminder ul{padding:0;list-style:none}.payment-reminder button{min-height:36px;padding:6px 12px}.payment-complete{color:#176357;font-weight:700}#paymentDialog{width:min(420px,calc(100% - 28px));border:1px solid #d3e9df;border-radius:16px;padding:20px;color:#173e35}#paymentDialog::backdrop{background:#173e3566}#paymentDialog form{grid-template-columns:1fr;gap:12px}#paymentDialog h2{margin-bottom:6px}#paymentDialog .editor-actions{margin-top:6px}#paymentError{color:#a13b36;font-size:13px;margin:0}#paymentError:empty{display:none}
+#navigation{z-index:30}#navigation button{cursor:pointer}#fee label{min-width:0}#fee input[type=date]{min-width:0;width:100%;max-width:100%;display:block}#otherFeeLabel{grid-column:1/-1}@media(max-width:800px){#fee{grid-template-columns:minmax(0,1fr)}}
 </style></head><body><nav id="navigation" aria-label="薪資功能" hidden><strong>薪資與繳費</strong><a class="home-link" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button type="button" data-page="payments" aria-current="page"><span class="nav-icon" aria-hidden="true">⌂</span><span class="nav-full">本月應支付</span><span class="nav-short">應支付</span></button><button type="button" data-page="bills" aria-label="帳單與代繳"><span class="nav-icon" aria-hidden="true">▤</span><span class="nav-full">帳單與代繳</span><span class="nav-short">帳單</span></button><button type="button" data-page="records" aria-label="薪資、請假與歷史紀錄"><span class="nav-icon" aria-hidden="true">☷</span><span class="nav-full">薪資、請假與歷史紀錄</span><span class="nav-short">薪資紀錄</span></button><button type="button" data-page="analysis" aria-label="支出分析"><span class="nav-icon" aria-hidden="true">◔</span><span class="nav-full">支出分析</span><span class="nav-short">分析</span></button></nav><main>
-<header><a class="login-home" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button id="sync" type="button" class="secondary" hidden>同步雲端</button><button id="logout" type="button" hidden>登出</button><h1>外傭薪資紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a><div id="versionBox"><div id="versionInfo"><span id="versionStatus" role="status">尚未檢查</span><span id="versionDetail">網站 v1.4.1</span></div><button id="checkVersionBtn" class="secondary" type="button">檢查版本</button></div></header>
+<header><a class="login-home" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button id="sync" type="button" class="secondary" hidden>同步雲端</button><button id="logout" type="button" hidden>登出</button><h1>外傭薪資紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a><div id="versionBox"><div id="versionInfo"><span id="versionStatus" role="status">尚未檢查</span><span id="versionDetail">網站 v1.4.2</span></div><button id="checkVersionBtn" class="secondary" type="button">檢查版本</button></div></header>
 <section id="login" hidden><h2>輸入薪資頁密碼</h2><form><label>密碼<input name="password" type="password" autocomplete="current-password" required></label><button>登入</button></form></section><div class="bar" id="filters" hidden><label>年份<select id="year"></select></label><label>月份<select id="month"></select></label></div>
 <p id="status" role="status" aria-live="polite"></p>
 <div id="content" hidden><section id="dashboard" data-panel="payments"><h2>本月應支付費用</h2><p id="selectedMonth" class="field-note"></p><div id="paymentReminder" class="payment-reminder" hidden role="status"><strong>付款提醒</strong><ul id="reminderList"></ul></div><div class="quick-actions"><button id="quickSalary" type="button">登記薪資付款</button></div><div class="totals"><p>薪資待付估計<strong id="salaryDue">—</strong></p><p>本月到期及逾期<strong id="dueCount">—</strong></p></div><div class="payment-card"><h3>薪資付款</h3><p id="salaryPaymentInfo"></p><p id="salaryPaymentState" class="field-note"></p></div><h3>本月到期及逾期未繳費用</h3><ul id="dueBills" class="record-list"></ul><p id="dueNote" class="field-note"></p><h3>實付摘要</h3><div class="totals"><p>本月實付<strong id="monthTotal">—</strong></p><p><span id="yearTotalLabel">年度累計實付</span><strong id="yearTotal">—</strong></p><p>待繳帳單<strong id="pendingTotal">—</strong></p></div><p id="breakdown"></p><p id="yearStatus" role="status"></p></section>
@@ -87,10 +88,10 @@ button{min-height:44px}
 <label>請假結束（選填）<input name="end" type="date"><span id="leaveEndWeekday" class="field-note"></span></label>
 <label>薪資調整金額<input name="amount" type="number" step="1" required placeholder="例如 -667"><span class="field-note">扣款輸入負數，補發輸入正數</span></label>
 <label>備註<input name="note" maxlength="500"></label><div class="editor-actions"><button type="submit">儲存請假</button><button class="secondary" type="reset">取消編輯／新增一筆</button></div></form></section>
-<section id="bills" data-panel="bills" hidden><h2>帳單與代繳</h2><p>收到帳單先記期限，繳完直接登記付款。</p><button id="newBill" type="button">＋ 新增帳單</button><details id="billEditor"><summary id="billTitle">新增帳單</summary><form id="fee"><p id="billMonth"></p>
-<input name="id" type="hidden"><label>項目<select name="category"><option>健保費</option><option>就業安定費</option><option>職災保險費</option><option>雇主意外險</option><option>其他代付</option></select></label>
+<section id="bills" data-panel="bills" hidden><h2>帳單與代繳</h2><p>收到帳單可先填繳費期限，實際繳費日及金額可留空，付款後再補填。</p><button id="newBill" type="button">＋ 新增帳單</button><details id="billEditor"><summary id="billTitle">新增帳單</summary><form id="fee"><p id="billMonth"></p>
+<input name="id" type="hidden"><label>項目<select name="category"><option>健保費</option><option>就業安定費</option><option>職災保險費</option><option>雇主意外險</option><option>外傭保險費</option><option>其他代付</option></select></label><label id="otherFeeLabel" hidden>其他代付項目<input name="otherCategory" maxlength="80" placeholder="例如：交通費"></label>
 <label>帳單涵蓋期間／日期<input name="period" maxlength="500"></label>
-<label>繳費期限<input name="due" type="date"></label><label>實際繳費日<input name="paidDate" type="date"></label>
+<label>繳費期限<input name="due" type="date"></label><label>實際繳費日（付款後補填）<input name="paidDate" type="date"></label>
 <label>實付金額<input name="amount" type="number" min="0" step="1"></label><label>備註<input name="note" maxlength="500"></label><div class="editor-actions"><button id="saveBill" type="submit">儲存帳單</button><button class="secondary" type="reset">取消編輯／新增帳單</button></div></form></details><h3>待繳及待補資料</h3><ul id="pendingBills" class="record-list"></ul><h3>本月已繳</h3><ul id="paidBills" class="record-list"></ul></section>
 
 <section data-panel="records" hidden><h2>本月歸檔帳單</h2><ul id="archivedBills" class="record-list"></ul></section><section id="analysis" data-panel="analysis" hidden><h2 id="analysisHeading">年度支出分析</h2><p id="analysisNote"></p><div id="analysisCharts" class="analysis-charts"></div><h3>每月支出明細</h3><table><thead><tr><th scope="col">月份</th><th scope="col">薪資</th><th scope="col">代繳</th><th scope="col">合計</th></tr></thead><tbody id="analysisRows"></tbody></table></section></div></main><dialog id="paymentDialog"><h2 id="paymentTitle">完成付款</h2><p id="paymentContext" class="field-note"></p><form id="paymentForm"><label>實際付款日期<input type="date" name="paidDate" required></label><label>實付金額<input type="number" name="amount" min="0" step="1" required></label><label id="paymentReceived"><input type="checkbox" name="received">已簽收</label><p id="paymentError" role="status"></p><div class="editor-actions"><button id="paymentConfirm" type="submit">確認完成付款</button><button id="paymentCancel" class="secondary" type="button">取消</button></div></form></dialog><script>
@@ -145,6 +146,12 @@ function updateWeekdays() {
 leave.elements.start.addEventListener('input',updateWeekdays);
 leave.elements.end.addEventListener('input',updateWeekdays);
 const formatted = value => Number(value).toLocaleString('zh-TW')+' 元';
+function updateOtherFee() {
+  const other=fee.elements.category.value==='其他代付';
+  el('otherFeeLabel').hidden=!other;
+  fee.elements.otherCategory.required=other;
+}
+fee.elements.category.addEventListener('change',updateOtherFee);
 function fill(form, keys, values) {
   keys.forEach((key,i)=>{form.elements[key].value=values[i] ?? '';});
 }
@@ -187,7 +194,7 @@ function selectPage(page) {
 }
 el('navigation').onclick=event=>{
   const button=event.target.closest('[data-page]');
-  if(button) selectPage(button.dataset.page);
+  if(button){selectPage(button.dataset.page);window.scrollTo(0,0);}
 };
 function openSalaryPayment() {
   const data=records.get(current());
@@ -307,6 +314,10 @@ function renderTotals() {
     el('billMonth').textContent='帳單歸檔月份 '+billMonth;
     el('billTitle').textContent=completePayment?'確認繳費':'編輯帳單';
     fill(fee,['category','period','due','paidDate','amount','note','id'],row.slice(1));
+    const custom=row[1].startsWith('其他代付：');
+    if(custom) fee.elements.category.value='其他代付';
+    fee.elements.otherCategory.value=custom?row[1].slice('其他代付：'.length):'';
+    updateOtherFee();
     if(completePayment && !fee.elements.paidDate.value) fee.elements.paidDate.value=todayDate;
     el('saveBill').textContent=completePayment?'確認完成繳費':'儲存帳單';
     fee.elements.amount.required=completePayment;
@@ -441,7 +452,7 @@ async function loadYear(refresh=false) {
   return !failed.length;
 }
 function busy(active) {
-  document.querySelectorAll('button,select').forEach(control=>{control.disabled=active;});
+  document.querySelectorAll('button:not(#navigation button[data-page]),select').forEach(control=>{control.disabled=active;});
 }
 async function api(action,payload={}) {
   const response=await fetch('/api/payroll',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...payload})});
@@ -502,6 +513,7 @@ async function load() {
 year.onchange=()=>{months(month.value);load();};month.onchange=load;
 leave.onreset=()=>{leave.elements.id.value='';el('leaveTitle').textContent='新增請假';queueMicrotask(updateWeekdays);};
 fee.onreset=()=>{
+  queueMicrotask(updateOtherFee);
   fee.elements.id.value='';
   billMonth='';
   el('billMonth').textContent='帳單歸檔月份 '+current();
@@ -513,7 +525,13 @@ fee.onreset=()=>{
 for (const [form,type] of [[salary,'薪資'],[leave,'請假'],[fee,'繳費']]) {
   form.onsubmit=event=>{event.preventDefault();
     if(form===salary && el('saveSalary').textContent==='確認薪資付款' && (!salary.elements.paidDate.value || salary.elements.amount.value==='')) {el('status').textContent='請填寫實際付款日與實付金額';return;}
-    request('saveRecord','儲存中…','已儲存',type,form===fee && billMonth ? billMonth : current(),Object.fromEntries(new FormData(form)));
+    const input=Object.fromEntries(new FormData(form));
+    if(form===fee && input.category==='其他代付') {
+      const name=input.otherCategory.trim();
+      if(!name){el('status').textContent='請輸入其他代付項目';return;}
+      input.category='其他代付：'+name;
+    }
+    request('saveRecord','儲存中…','已儲存',type,form===fee && billMonth ? billMonth : current(),input);
   };
 }
 el('sync').onclick=async()=>{
@@ -536,7 +554,7 @@ async function start() {
     else {el('status').textContent='連線失敗，請重新整理網頁';}
   } finally {busy(false);}
 }
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.4.2';
 el('checkVersionBtn').onclick=async()=>{
   const button=el('checkVersionBtn');
   button.disabled=true;
