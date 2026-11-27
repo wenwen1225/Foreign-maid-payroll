@@ -73,7 +73,7 @@ button{min-height:44px}
  .payment-reminder li{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.payment-reminder ul{padding:0;list-style:none}.payment-reminder button{min-height:36px;padding:6px 12px}.payment-complete{color:#176357;font-weight:700}#paymentDialog{width:min(420px,calc(100% - 28px));border:1px solid #d3e9df;border-radius:16px;padding:20px;color:#173e35}#paymentDialog::backdrop{background:#173e3566}#paymentDialog form{grid-template-columns:1fr;gap:12px}#paymentDialog h2{margin-bottom:6px}#paymentDialog .editor-actions{margin-top:6px}#paymentError{color:#a13b36;font-size:13px;margin:0}#paymentError:empty{display:none}
 #navigation{z-index:30}#navigation button{cursor:pointer}#fee label{min-width:0}#fee input[type=date]{min-width:0;width:100%;max-width:100%;display:block}#otherFeeLabel{grid-column:1/-1}@media(max-width:800px){#fee{grid-template-columns:minmax(0,1fr)}}
 </style></head><body><nav id="navigation" aria-label="薪資功能" hidden><strong>薪資與繳費</strong><a class="home-link" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button type="button" data-page="payments" aria-current="page"><span class="nav-icon" aria-hidden="true">⌂</span><span class="nav-full">本月應支付</span><span class="nav-short">應支付</span></button><button type="button" data-page="bills" aria-label="帳單與代繳"><span class="nav-icon" aria-hidden="true">▤</span><span class="nav-full">帳單與代繳</span><span class="nav-short">帳單</span></button><button type="button" data-page="records" aria-label="薪資、請假與歷史紀錄"><span class="nav-icon" aria-hidden="true">☷</span><span class="nav-full">薪資、請假與歷史紀錄</span><span class="nav-short">薪資紀錄</span></button><button type="button" data-page="analysis" aria-label="支出分析"><span class="nav-icon" aria-hidden="true">◔</span><span class="nav-full">支出分析</span><span class="nav-short">分析</span></button></nav><main>
-<header><a class="login-home" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button id="sync" type="button" class="secondary" hidden>同步雲端</button><button id="logout" type="button" hidden>登出</button><h1>外傭薪資紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a><div id="versionBox"><div id="versionInfo"><span id="versionStatus" role="status">尚未檢查</span><span id="versionDetail">網站 v1.4.2</span></div><button id="checkVersionBtn" class="secondary" type="button">檢查版本</button></div></header>
+<header><a class="login-home" href="https://wens-space.vercel.app/">⌂ 返回 Wen’s Space</a><button id="sync" type="button" class="secondary" hidden>同步雲端</button><button id="logout" type="button" hidden>登出</button><h1>外傭薪資紀錄</h1><a id="sheet" target="_blank" rel="noopener" hidden>開啟 Google Sheet</a><div id="versionBox"><div id="versionInfo"><span id="versionStatus" role="status">尚未檢查</span><span id="versionDetail">網站 v1.4.3</span></div><button id="checkVersionBtn" class="secondary" type="button">檢查版本</button></div></header>
 <section id="login" hidden><h2>輸入薪資頁密碼</h2><form><label>密碼<input name="password" type="password" autocomplete="current-password" required></label><button>登入</button></form></section><div class="bar" id="filters" hidden><label>年份<select id="year"></select></label><label>月份<select id="month"></select></label></div>
 <p id="status" role="status" aria-live="polite"></p>
 <div id="content" hidden><section id="dashboard" data-panel="payments"><h2>本月應支付費用</h2><p id="selectedMonth" class="field-note"></p><div id="paymentReminder" class="payment-reminder" hidden role="status"><strong>付款提醒</strong><ul id="reminderList"></ul></div><div class="quick-actions"><button id="quickSalary" type="button">登記薪資付款</button></div><div class="totals"><p>薪資待付估計<strong id="salaryDue">—</strong></p><p>本月到期及逾期<strong id="dueCount">—</strong></p></div><div class="payment-card"><h3>薪資付款</h3><p id="salaryPaymentInfo"></p><p id="salaryPaymentState" class="field-note"></p></div><h3>本月到期及逾期未繳費用</h3><ul id="dueBills" class="record-list"></ul><p id="dueNote" class="field-note"></p><h3>實付摘要</h3><div class="totals"><p>本月實付<strong id="monthTotal">—</strong></p><p><span id="yearTotalLabel">年度累計實付</span><strong id="yearTotal">—</strong></p><p>待繳帳單<strong id="pendingTotal">—</strong></p></div><p id="breakdown"></p><p id="yearStatus" role="status"></p></section>
@@ -276,7 +276,7 @@ function renderReminder(pending) {
   const add=(date,label,overdue=false,onPay)=>{
     if(!date) return;
     const days=daysTo(date);
-    if(!Number.isFinite(days)||days>4||(!overdue&&days<0)) return;
+    if(!Number.isFinite(days)||days>3||(!overdue&&days<0)) return;
     const item=document.createElement('li');
     item.textContent=label+'（'+date+'）'+(days===0?' 今日到期':days<0?' 已逾期 '+(-days)+' 天':' 剩 '+days+' 天');
     if(onPay){const button=document.createElement('button');button.type='button';button.textContent='完成付款';button.onclick=onPay;item.append(button);}
@@ -554,7 +554,7 @@ async function start() {
     else {el('status').textContent='連線失敗，請重新整理網頁';}
   } finally {busy(false);}
 }
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.4.3';
 el('checkVersionBtn').onclick=async()=>{
   const button=el('checkVersionBtn');
   button.disabled=true;
